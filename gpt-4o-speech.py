@@ -10,12 +10,12 @@ import cv2
 import base64
 import os
 from PIL import Image, ImageTk
+import settings
 
-
-openai.api_key = "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"
+openai.api_key = settings.AP
 
 # JSONファイルのパスを指定（ユーザーの環境に合わせてパスを設定してください）
-json_file_path = "my-project-test-436808-4ac407ed29b1.json"
+json_file_path = "\\Users\Ryunosuke\Desktop\my-project-test-436808-4ac407ed29b1.json"
 
 # 環境変数を設定
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json_file_path

@@ -7,7 +7,7 @@ import io
 import tkinter as tk
 
 # Google Cloudの認証ファイルへのパスを設定
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "my-project-test-436808-4ac407ed29b1.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "\\Users\Ryunosuke\Desktop\my-project-test-436808-4ac407ed29b1.json"
 
 # 録音設定
 FORMAT = pyaudio.paInt16

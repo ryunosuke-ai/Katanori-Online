@@ -50,7 +50,7 @@ last_sent_posture = None  # 最後に送信されたポーズを保存する変�
 
 
 # Google Speech-to-Textの設定
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "my-project-test-436808-4ac407ed29b1.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "\\Users\Ryunosuke\Desktop\my-project-test-436808-4ac407ed29b1.json"
 speech_client = speech.SpeechClient()
 language_code = "ja-JP"
 

@@ -29,7 +29,7 @@ openai.api_key = settings.AP  # OpenAI APIキーを設定
 PC3_SOCKET_URL = "http://192.168.0.11:5001"  # PC3のSocketIOサーバーURLを設定
 
 # Google Speech-to-Textの設定
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "my-project-test-436808-4ac407ed29b1.json"  # Google Cloud認証情報のパス
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "\\Users\Ryunosuke\Desktop\my-project-test-436808-4ac407ed29b1.json"  # Google Cloud認証情報のパス
 speech_client = speech.SpeechClient()
 language_code = "ja-JP"  # 日本語設定
 

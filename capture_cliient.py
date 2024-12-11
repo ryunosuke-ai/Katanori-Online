@@ -8,6 +8,7 @@ import openai
 import cv2
 import os
 from google.cloud import speech
+import settings
 
 app = Flask(__name__)
 
@@ -23,10 +24,10 @@ capture_interval = 5  # 写真撮影の間隔（秒）
 last_capture_time = time.time()
 recognized_text = ""
 photo_data = ""
-openai.api_key = "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"  # OpenAI APIキーを設定
+openai.api_key = settings.AP  # OpenAI APIキーを設定
 
 # Google Speech-to-Textの設定
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "my-project-test-436808-4ac407ed29b1.json"  # Google Cloud認証情報のパス
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "\\Users\Ryunosuke\Desktop\my-project-test-436808-4ac407ed29b1.json"  # Google Cloud認証情報のパス
 speech_client = speech.SpeechClient()
 language_code = "ja-JP"  # 日本語設定
 
