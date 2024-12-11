@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音声認識アプリ</title>
+    <script src="recorder.js"></script> <!-- Recorder.jsを読み込む -->
+</head>
+<body>
+    <h1>音声認識アプリ</h1>
+    <button id="recordButton">録音開始/停止</button>
+    <h2>文字起こし結果</h2>
+    <pre id="result"></pre>
+
+    <script>
+        let isRecording = false;
+        let recorder;
+        let audioStream;
+
+        document.getElementById("recordButton").addEventListener("click", async () => {
+            if (!isRecording) {
+                // 録音開始
+                isRecording = true;
+                document.getElementById("recordButton").textContent = "録音停止";
+
+                try {
+                    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const input = audioContext.createMediaStreamSource(audioStream);
+                    recorder = new Recorder(input, { numChannels: 1 });
+
+                    recorder.record();
+                } catch (error) {
+                    console.error("マイクアクセスエラー:", error);
+                    alert("マイクへのアクセスが許可されていません。");
+                }
+            } else {
+                // 録音停止
+                isRecording = false;
+                document.getElementById("recordButton").textContent = "録音開始";
+                recorder.stop();
+
+                recorder.exportWAV((blob) => {
+                    const formData = new FormData();
+                    formData.append("audio_file", blob, "audio.wav");
+
+                    fetch("/transcribe", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.transcript) {
+                            document.getElementById("result").textContent = data.transcript;
+                        } else {
+                            document.getElementById("result").textContent = "エラーが発生しました: " + data.error;
+                        }
+                    })
+                    .catch(error => {
+                        console.error("通信エラー:", error);
+                        document.getElementById("result").textContent = "通信エラーが発生しました";
+                    });
+                });
+
+                audioStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>
