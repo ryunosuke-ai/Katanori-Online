@@ -3,10 +3,11 @@ from google.cloud import speech
 import io
 import os
 import logging
+import settings
 
 app = Flask(__name__)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "\Users\Ryunosuke\Desktop\my-project-test-436808-4ac407ed29b1.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.G_AP
 
 client = speech.SpeechClient()
 

@@ -5,9 +5,10 @@ import threading
 from google.cloud import speech
 import io
 import tkinter as tk
+import settings
 
 # Google Cloudの認証ファイルへのパスを設定
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "\\Users\Ryunosuke\Desktop\my-project-test-436808-4ac407ed29b1.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.G_AP
 
 # 録音設定
 FORMAT = pyaudio.paInt16

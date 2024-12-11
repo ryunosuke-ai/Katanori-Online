@@ -13,7 +13,7 @@ import settings
 openai.api_key = settings.AP
 
 # サービスアカウントキーのJSONファイルのパスを指定します
-credentials_path = "\\Users\Ryunosuke\Desktop\my-project-test-436808-4ac407ed29b1.json"  # 自分のファイルパスに置き換えてください
+credentials_path = settings.G_AP  # 自分のファイルパスに置き換えてください
 
 # 認証情報を読み込み、Google Cloud Vision APIクライアントを初期化します
 credentials = service_account.Credentials.from_service_account_file(credentials_path)

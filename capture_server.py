@@ -17,7 +17,7 @@ import settings
 
 # OpenAI APIキーとGoogle Cloud認証ファイルパス
 openai.api_key = settings.AP
-json_file_path = "\\Users\Ryunosuke\Desktop\my-project-test-436808-4ac407ed29b1.json"
+json_file_path = settings.G_AP
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json_file_path
 
 # FlaskアプリとSocket.IOサーバー設定

@@ -15,7 +15,7 @@ import settings
 openai.api_key = settings.AP
 
 # JSONファイルのパスを指定（ユーザーの環境に合わせてパスを設定してください）
-json_file_path = "\\Users\Ryunosuke\Desktop\my-project-test-436808-4ac407ed29b1.json"
+json_file_path = settings.G_AP
 
 # 環境変数を設定
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json_file_path
