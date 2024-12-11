@@ -9,6 +9,7 @@ import cv2
 import os
 from google.cloud import speech
 import socketio  # 追加: SocketIOクライアントの使用
+import settings
 
 app = Flask(__name__)
 
@@ -24,7 +25,7 @@ capture_interval = 5  # 写真撮影の間隔（秒）
 last_capture_time = time.time()
 recognized_text = ""
 photo_data = ""
-openai.api_key = "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"  # OpenAI APIキーを設定
+openai.api_key = settings.AP  # OpenAI APIキーを設定
 PC3_SOCKET_URL = "http://192.168.0.11:5001"  # PC3のSocketIOサーバーURLを設定
 
 # Google Speech-to-Textの設定

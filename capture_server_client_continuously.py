@@ -10,6 +10,7 @@ import os
 from google.cloud import speech
 import socketio
 import threading
+import settings
 
 app = Flask(__name__)
 
@@ -27,7 +28,7 @@ recognized_text = ""  # PC1の文字起こし結果
 pc2_transcription = ""  # PC2からの文字起こし結果
 photo_data = ""
 latest_gpt_response = ""  # 最新のGPT応答
-openai.api_key = "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"  # OpenAI APIキーを設定
+openai.api_key = settings.AP  # OpenAI APIキーを設定
 PC3_SOCKET_URL = "http://192.168.1.67:5001"  # PC3のSocketIOサーバーURLを設定
 
 # Google Speech-to-Textの設定
