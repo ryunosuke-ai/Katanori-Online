@@ -7,6 +7,19 @@ import os
 from google.cloud import speech
 import threading
 import settings
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+silence_duration = 0  # 無音時間を管理するグローバル変数
+
+@app.route('/reset_silence', methods=['POST'])
+def reset_silence():
+    """PC1からのリセットリクエストを受信し、無音時間をリセット"""
+    global silence_duration
+    silence_duration = 0
+    print("PC1からのリクエストで無音時間をリセットしました")
+    return jsonify({"status": "reset successful"})
 
 # Google Cloud認証ファイルパス
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.GP
@@ -51,7 +64,7 @@ def send_text_to_client(text):
 
 def send_silence_status():
     """無音状態の継続時間を定期的にPC1に送信"""
-    silence_duration = 0
+    global silence_duration
     while True:
         with sd.InputStream(samplerate=RATE, channels=CHANNELS, dtype='int16') as stream:
             try:
@@ -72,6 +85,7 @@ def send_silence_status():
                 print("無音状態送信中にエラーが発生しました:", e)
 
             time.sleep(0.5)  # 送信間隔
+
 
 def continuous_transcription():
     """音声認識を継続的に行い、文字起こしデータをPC1に送信"""
@@ -123,6 +137,8 @@ def continuous_transcription():
 if __name__ == "__main__":
     # 無音状態送信スレッドを開始
     threading.Thread(target=send_silence_status, daemon=True).start()
+    # Flaskサーバーを開始
+    threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5002, threaded=True), daemon=True).start()
 
     # 継続的に音声認識を実行
     continuous_transcription()
