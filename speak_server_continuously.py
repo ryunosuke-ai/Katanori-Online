@@ -13,16 +13,21 @@ app = Flask(__name__)
 
 silence_duration = 0  # 無音時間を管理するグローバル変数
 
-@app.route('/reset_silence', methods=['POST'])
 def reset_silence():
-    """PC1からのリセットリクエストを受信し、無音時間をリセット"""
+    """無音時間をリセットする"""
     global silence_duration
     silence_duration = 0
-    print("PC1からのリクエストで無音時間をリセットしました")
+    print("無音時間をリセットしました")
+
+@app.route('/reset_silence', methods=['POST'])
+def reset_silence_route():
+    """PC1からのリセットリクエストを受信し、無音時間をリセット"""
+    reset_silence()
     return jsonify({"status": "reset successful"})
 
 # Google Cloud認証ファイルパス
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.GP
+
 # 設定
 SILENCE_THRESHOLD = 800  # 無音判定の閾値
 SILENCE_DURATION = 3     # 無音の継続時間（秒）
@@ -66,8 +71,8 @@ def send_silence_status():
     """無音状態の継続時間を定期的にPC1に送信"""
     global silence_duration
     while True:
-        with sd.InputStream(samplerate=RATE, channels=CHANNELS, dtype='int16') as stream:
-            try:
+        try:
+            with sd.InputStream(samplerate=RATE, channels=CHANNELS, dtype='int16') as stream:
                 data, _ = stream.read(int(RATE * 0.5))
                 data_flat = data.flatten()
                 smoothed_data = moving_average(data_flat)
@@ -81,11 +86,10 @@ def send_silence_status():
                 # PC1に無音状態を送信
                 response = requests.post(CLIENT_URL_SILENCE, json={"silent_duration": silence_duration})
                 print(f"PC1に無音状態を送信しました: {silence_duration}")
-            except Exception as e:
-                print("無音状態送信中にエラーが発生しました:", e)
+        except Exception as e:
+            print("無音状態送信中にエラーが発生しました:", e)
 
-            time.sleep(0.5)  # 送信間隔
-
+        time.sleep(0.5)  # 送信間隔
 
 def continuous_transcription():
     """音声認識を継続的に行い、文字起こしデータをPC1に送信"""
@@ -95,9 +99,9 @@ def continuous_transcription():
         recording_silence_duration = 0  # この関数専用の無音カウント
         recording_started = False
 
-        with sd.InputStream(samplerate=RATE, channels=CHANNELS, dtype='int16') as stream:
-            while True:
-                try:
+        try:
+            with sd.InputStream(samplerate=RATE, channels=CHANNELS, dtype='int16') as stream:
+                while True:
                     data, _ = stream.read(int(RATE * 0.5))
                     buffer.append(data)
                     data_flat = data.flatten()
@@ -117,22 +121,18 @@ def continuous_transcription():
                     else:
                         recording_silence_duration = 0  # 無音カウントのリセット
 
-                except Exception as e:
-                    print("音声認識中にエラーが発生しました:", e)
-                    break
-
-            # バッファ内の録音データを結合し、文字起こし
-            try:
+                # バッファ内の録音データを結合し、文字起こし
                 data_bytes = np.concatenate(buffer).tobytes()
                 if recording_started:
                     transcribed_text = transcribe_audio(data_bytes)
                     print("文字起こし結果:", transcribed_text)
                     send_text_to_client(transcribed_text)
-            except Exception as e:
-                print("文字起こし中にエラーが発生しました:", e)
 
-            print("次の音声認識を準備中...")
-            time.sleep(RESTART_DELAY)
+        except Exception as e:
+            print("音声認識中にエラーが発生しました:", e)
+
+        print("次の音声認識を準備中...")
+        time.sleep(RESTART_DELAY)
 
 if __name__ == "__main__":
     # 無音状態送信スレッドを開始
