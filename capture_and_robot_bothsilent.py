@@ -288,7 +288,7 @@ def send_to_pc3_if_both_silent():
     PC1とPC2の無音状態を監視し、両方が無音の場合にPC3にGPT応答を送信。
     ログを更新してプロンプトを生成。
     """
-    global pc1_silent_duration, pc2_silent_duration, talk_count
+    global pc1_silent_duration, pc2_silent_duration, talk_count, recognized_text, pc2_transcription
     pc1_silent_duration = 0  # PC1の無音継続時間
     pc2_silent_duration = 0  # PC2の無音継続時間
 
@@ -301,8 +301,8 @@ def send_to_pc3_if_both_silent():
 
             if is_silent(smoothed_data):  # 無音状態の場合
                 pc1_silent_duration += 0.5
-                print("PC1の無音継続時間：",pc1_silent_duration)
-                print("PC2の無音継続時間：",pc2_silent_duration)
+                print("PC1の無音継続時間：", pc1_silent_duration)
+                print("PC2の無音継続時間：", pc2_silent_duration)
             else:  # 音声が検出された場合
                 pc1_silent_duration = 0
 
@@ -311,17 +311,21 @@ def send_to_pc3_if_both_silent():
                 print("PC1とPC2が無音状態。PC3にGPT応答を送信します...")
                 update_conversation_log(recognized_text, pc2_transcription, latest_gpt_response)  # ログを更新
                 sio.emit('text_to_speech', {'text': latest_gpt_response})
+                
+                # 無音状態後に認識したテキストをリセット
+                recognized_text = ""
+                pc2_transcription = ""
+                print("PC1とPC2の発言内容をリセットしました。")
+
                 pc1_silent_duration = 0  # リセット
                 pc2_silent_duration = 0  # リセット
                 reset_pc2_silence()  # PC2の無音時間をリセット
-                talk_count += 1 # 会話の回数をインクリメント
+                talk_count += 1  # 会話の回数をインクリメント
                 print(f"会話の回数：{talk_count}")
 
                 if talk_count > TALK_MAX:
-                    talk_count = 0 # 会話の最大回数を超えた場合には、会話の回数をリセット
+                    talk_count = 0  # 会話の最大回数を超えた場合には、会話の回数をリセット
                     print(f"会話の回数をリセット")
-
-                
 
             # 適切な休止を入れて次のループへ
             time.sleep(0.5)
