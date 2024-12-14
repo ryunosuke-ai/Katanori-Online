@@ -32,6 +32,9 @@ photo_data = ""
 latest_gpt_response = ""  # 最新のGPT応答
 openai.api_key =  settings.AP # OpenAI APIキーを設定
 PC3_SOCKET_URL = "http://192.168.1.79:5001"  # PC3のSocketIOサーバーURLを設定
+talk_count = 0 #会話の回数を記録
+TALK_MAX = 3 #会話の最大回数
+TALK_DURATION = 1
 
 # 肩乗りのIPアドレス, ポート
 IP = '127.0.0.1'  # ローカルホストでテスト
@@ -178,22 +181,65 @@ def update_conversation_log(pc1_text, pc2_text, response_text):
         log_file.write(f"PC1: {pc1_text}\nPC2: {pc2_text}\nResponse: {response_text}\n---\n")
 
 def generate_prompt():
+    global talk_count
+
     """ログをプロンプトとしてフォーマットする"""
     prompt = "これまでの会話ログ:\n"
     for entry in conversation_log[-5:]:  # 最新の5つの会話ログをプロンプトに含める
         prompt += f"PC1: {entry['pc1']}\nPC2: {entry['pc2']}\nResponse: {entry['response']}\n"
-    prompt += f"\n若者と高齢者が会話をしていて、現在の若者の発言は{recognized_text}で、高齢者の発言は{pc2_transcription}です。\n \
+
+
+    if talk_count < TALK_MAX: #高齢者とのみの会話
+        if talk_count >= TALK_DURATION and talk_count < TALK_MAX:
+            response = openai.ChatCompletion.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "system", "content": "あなたは若者と高齢者の会話をサポートするAIです。現在は、高齢者とのみ会話をしています。出力は、結果のみ返答してください。"},
+                    {"role": "user", "content": f"今までの高齢者との会話のログは、\n{prompt}\nです。\
+                     この会話のログを踏まえて、まだ高齢者と会話をするべきだと判断した場合には0を、そろそろ若者にも話を振って会話を広げていくべきだと判断した場合には1を出力してください。"}],
+                temperature=0  # 応答の一貫性を高める
+            )
+
+            print(f"判定結果{response["choices"][0]["message"]["content"]}")
+
+            if response["choices"][0]["message"]["content"] == "0": #まだ高齢者と会話をするべきだと判断した場合
+                prompt += f"\n高齢者と会話をしていて、高齢者の発言は{pc2_transcription}です。\n \
+                         この発言内容から現在の会話を予測して、入力画像を考慮しながら会話の流れに沿った質問をしてください。\n\
+                         入力画像の内容をいまいち読み取れない場合、通常であれば「申し訳ありませんが、～」といった文章も生成していますが、今回は生成した文章をそのまま読み上げようと思っているため、生成する文章は、質問のみにしてください。\n\
+                         質問は、上記の会話ログの内容を踏まえた上で、高齢者に対する質問を1つ生成してください。\n\
+                         高齢者に対する質問を生成する際には、「高齢者さん、○○（質問内容）」という風に、高齢者に対して質問していることが分かるように声掛けをしてください。\n\
+                         返答は、そのまま読み上げてもらうことを想定しているので、「GPTからの応答」など、質問以外の文字は含めず、質問文のみ返答してください。\n"
+                
+            elif response["choices"][0]["message"]["content"] == "1": # 若者にも話を振るべきだと判断した場合
+                prompt += f"\n若者と高齢者が会話をしていて、現在の若者の発言は{recognized_text}で、高齢者の発言は{pc2_transcription}です。\n \
                          この発言内容から現在の会話を予測して、入力画像を考慮しながら会話の流れに沿った質問をしてください。\n\
                          入力画像の内容をいまいち読み取れない場合、通常であれば「申し訳ありませんが、～」といった文章も生成していますが、今回は生成した文章をそのまま読み上げようと思っているため、生成する文章は、質問のみにしてください。\n\
                          質問は、上記の会話ログの内容を踏まえた上で、若者と高齢者に対する質問を1つずつ生成し、必ず最初に高齢者に対する質問、次に若者に対する質問の順番で生成してください。\n\
                          高齢者に対する質問を生成する際には、「高齢者さん、○○（質問内容）」という風に、高齢者に対して質問していることが分かるように声掛けをし、\
                          同様に、若者に対して質問を生成するときも「若者さん、○○（質問内容）」という風に、若者に対して質問していることが分かるように声掛けをしてください。\n\
                          返答は、そのまま読み上げてもらうことを想定しているので、「GPTからの応答」など、質問以外の文字は含めず、質問文のみ返答してください。\n"
+        
+        else :
+            prompt += f"\n高齢者と会話をしていて、高齢者の発言は{pc2_transcription}です。\n \
+                         この発言内容から現在の会話を予測して、入力画像を考慮しながら会話の流れに沿った質問をしてください。\n\
+                         入力画像の内容をいまいち読み取れない場合、通常であれば「申し訳ありませんが、～」といった文章も生成していますが、今回は生成した文章をそのまま読み上げようと思っているため、生成する文章は、質問のみにしてください。\n\
+                         質問は、上記の会話ログの内容を踏まえた上で、高齢者に対する質問を1つ生成してください。\n\
+                         高齢者に対する質問を生成する際には、「高齢者さん、○○（質問内容）」という風に、高齢者に対して質問していることが分かるように声掛けをしてください。\n\
+                         返答は、そのまま読み上げてもらうことを想定しているので、「GPTからの応答」など、質問以外の文字は含めず、質問文のみ返答してください。\n"
+
+        
+    elif talk_count >= TALK_MAX:# 若者に話を振る
+        prompt += f"\n若者と高齢者が会話をしていて、現在の若者の発言は{recognized_text}で、高齢者の発言は{pc2_transcription}です。\n \
+                         この発言内容から現在の会話を予測して、入力画像を考慮しながら会話の流れに沿った質問をしてください。\n\
+                         入力画像の内容をいまいち読み取れない場合、通常であれば「申し訳ありませんが、～」といった文章も生成していますが、今回は生成した文章をそのまま読み上げようと思っているため、生成する文章は、質問のみにしてください。\n\
+                         質問は、上記の会話ログの内容を踏まえた上で、若者に対する質問を1つ生成してください。\n\
+                        若者に対して質問を生成するときは「若者さん、○○（質問内容）」という風に、若者に対して質問していることが分かるように声掛けをしてください。\n\
+                         返答は、そのまま読み上げてもらうことを想定しているので、「GPTからの応答」など、質問以外の文字は含めず、質問文のみ返答してください。\n"
     return prompt
 
 def generate_gpt_response():
     """GPT-4にPC1とPC2の文字起こしおよび画像データを送信し、応答を保存"""
     global latest_gpt_response
+    
     try:
         prompt = generate_prompt()  # 更新されたログをプロンプトに含める
         response = openai.ChatCompletion.create(
@@ -229,7 +275,7 @@ def send_to_pc3_if_both_silent():
     PC1とPC2の無音状態を監視し、両方が無音の場合にPC3にGPT応答を送信。
     ログを更新してプロンプトを生成。
     """
-    global pc1_silent_duration, pc2_silent_duration
+    global pc1_silent_duration, pc2_silent_duration, talk_count
     pc1_silent_duration = 0  # PC1の無音継続時間
     pc2_silent_duration = 0  # PC2の無音継続時間
 
@@ -254,6 +300,14 @@ def send_to_pc3_if_both_silent():
                 sio.emit('text_to_speech', {'text': latest_gpt_response})
                 pc1_silent_duration = 0  # リセット
                 pc2_silent_duration = 0  # リセット
+                talk_count += 1 # 会話の回数をインクリメント
+                print(f"会話の回数：{talk_count}")
+
+                if talk_count > TALK_MAX:
+                    talk_count = 0 # 会話の最大回数を超えた場合には、会話の回数をリセット
+                    print(f"会話の回数をリセット")
+
+                
 
             # 適切な休止を入れて次のループへ
             time.sleep(0.5)
