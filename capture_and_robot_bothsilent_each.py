@@ -12,6 +12,7 @@ import settings
 import socketio
 import socket
 import threading
+import requests
 
 app = Flask(__name__)
 
@@ -32,6 +33,7 @@ photo_data = ""
 latest_gpt_response = ""  # 最新のGPT応答
 openai.api_key =  settings.AP # OpenAI APIキーを設定
 PC3_SOCKET_URL = "http://192.168.1.79:5001"  # PC3のSocketIOサーバーURLを設定
+PC2_RESET_URL = "http://192.168.1.136:5002/reset_silence"  # PC2のリセット用エンドポイント
 talk_count = 0 #会話の回数を記録
 TALK_MAX = 3 #会話の最大回数
 TALK_DURATION = 1
@@ -232,12 +234,23 @@ def generate_gpt_response():
     except Exception as e:
         print("GPT-4との通信エラー:", e)
 
+def reset_pc2_silence():
+    """PC2の無音時間をリセットするリクエストを送信"""
+    try:
+        response = requests.post(PC2_RESET_URL)
+        if response.status_code == 200:
+            print("PC2の無音時間をリセットしました")
+        else:
+            print(f"PC2リセットリクエストに失敗しました: {response.status_code}")
+    except Exception as e:
+        print(f"PC2リセットリクエスト中にエラーが発生しました: {e}")
+
 def send_to_pc3_if_both_silent():
     """
     PC1とPC2の無音状態を監視し、両方が無音の場合にPC3にGPT応答を送信。
     ログを更新してプロンプトを生成。
     """
-    global pc1_silent_duration, pc2_silent_duration, talk_count
+    global pc1_silent_duration, pc2_silent_duration, talk_count, recognized_text, pc2_transcription
     pc1_silent_duration = 0  # PC1の無音継続時間
     pc2_silent_duration = 0  # PC2の無音継続時間
 
@@ -250,8 +263,8 @@ def send_to_pc3_if_both_silent():
 
             if is_silent(smoothed_data):  # 無音状態の場合
                 pc1_silent_duration += 0.5
-                print("PC1の無音継続時間：",pc1_silent_duration)
-                print("PC2の無音継続時間：",pc2_silent_duration)
+                print("PC1の無音継続時間：", pc1_silent_duration)
+                print("PC2の無音継続時間：", pc2_silent_duration)
             else:  # 音声が検出された場合
                 pc1_silent_duration = 0
 
@@ -260,19 +273,25 @@ def send_to_pc3_if_both_silent():
                 print("PC1とPC2が無音状態。PC3にGPT応答を送信します...")
                 update_conversation_log(recognized_text, pc2_transcription, latest_gpt_response)  # ログを更新
                 sio.emit('text_to_speech', {'text': latest_gpt_response})
+                
+                # 無音状態後に認識したテキストをリセット
+                recognized_text = ""
+                pc2_transcription = ""
+                print("PC1とPC2の発言内容をリセットしました。")
+
                 pc1_silent_duration = 0  # リセット
                 pc2_silent_duration = 0  # リセット
-                talk_count += 1 # 会話の回数をインクリメント
+                reset_pc2_silence()  # PC2の無音時間をリセット
+                talk_count += 1  # 会話の回数をインクリメント
                 print(f"会話の回数：{talk_count}")
 
                 if talk_count > TALK_MAX:
-                    talk_count = 0 # 会話の最大回数を超えた場合には、会話の回数をリセット
+                    talk_count = 0  # 会話の最大回数を超えた場合には、会話の回数をリセット
                     print(f"会話の回数をリセット")
-
-                
 
             # 適切な休止を入れて次のループへ
             time.sleep(0.5)
+
 
 
 
