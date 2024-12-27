@@ -4,7 +4,7 @@ import wave
 import time
 
 DURATION = 10  # 最大録音時間（秒）
-SILENCE_THRESHOLD = 800  # 無音判定の閾値（適切な値に調整）
+SILENCE_THRESHOLD = 200  # 無音判定の閾値（適切な値に調整）
 SILENCE_DURATION = 3  # 無音が続いた場合の停止判定時間（秒）
 RESTART_DELAY = 5  # 録音再開の遅延秒数
 RATE = 44100

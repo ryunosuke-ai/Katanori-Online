@@ -53,7 +53,7 @@ def send_image_to_gpt(base64_image):
 
 def main():
     image_path = "captured_image.jpg"
-    interval_seconds = 10  # 撮影間隔（秒）
+    interval_seconds = 5  # 撮影間隔（秒）
 
     while True:
         try:
@@ -62,12 +62,13 @@ def main():
 
             print("画像をエンコード中...")
             base64_image = encode_image(image_path)
-
+            
             print("画像をGPTに送信中...")
             description = send_image_to_gpt(base64_image)
 
             print("GPTの応答:")
             print(description)
+            
         except Exception as e:
             print(f"エラーが発生しました: {e}")
 
